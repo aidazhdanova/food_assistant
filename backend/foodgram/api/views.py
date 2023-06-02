@@ -1,8 +1,3 @@
-from api.filters import IngredientSearchFilter, RecipeFilter
-from api.pagination import PageLimitPagination
-from api.serializers import (IngredientSerializer, RecipeCreateSerializer,
-                             RecipeSerializer, ShortRecipeSerializer,
-                             SubscriptionSerializer, TagSerializer)
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
@@ -13,7 +8,13 @@ from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 from users.models import Subscribe, User
 
+from .filters import IngredientSearchFilter, RecipeFilter
+from .pagination import PageLimitPagination
 from .permissions import AdminOrReadOnly, AdminUserOrReadOnly
+from .serializers import (FavoriteSerializer, IngredientSerializer,
+                          RecipeCreateSerializer, RecipeSerializer,
+                          ShoppingCartSerializer, SubscriptionSerializer,
+                          TagSerializer)
 
 
 class TagsViewSet(viewsets.ReadOnlyModelViewSet):
@@ -26,52 +27,62 @@ class IngredientsViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = (AdminOrReadOnly,)
     queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
-    filter_backends = (DjangoFilterBackend,)
     filterset_class = IngredientSearchFilter
     search_fields = ('^name',)
-    filterset_fields = ('name',)
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    permission_classes = (AdminUserOrReadOnly | AdminOrReadOnly,)
+    permission_classes = (AdminUserOrReadOnly,)
     queryset = Recipe.objects.all()
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     pagination_class = PageLimitPagination
+    
 
+
+    @staticmethod
+    def post_method_for_actions(request, pk, serializers):
+        data = {'user': request.user.id, 'recipe': pk}
+        serializer = serializers(data=data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def get_serializer_class(self):
         if self.request.method in SAFE_METHODS:
             return RecipeSerializer
         return RecipeCreateSerializer
     
-    @action(
-        detail=True,
-        methods=['post', 'delete'],
-        permission_classes=[IsAuthenticated]
-    )
-    def favorite(self, request, pk):
-        if request.method == 'POST':
-            return self.add_to(Favourite, request.user, pk)
-        else:
-            return self.delete_from(Favourite, request.user, pk)
-
-
-    @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated])
-    def shopping_cart(self, request, pk=None):
-        return self.toggle_relation(ShoppingCart, request, pk)
-
-    def toggle_relation(self, model, request, pk=None):
+    @staticmethod
+    def delete_method_for_actions(request, pk, model):
         user = request.user
-        recipe = self.get_object()
+        recipe = get_object_or_404(Recipe, id=pk)
+        model_obj = get_object_or_404(model, user=user, recipe=recipe)
+        model_obj.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
-        if model.objects.filter(user=user, recipe=recipe).exists():
-            model.objects.filter(user=user, recipe=recipe).delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        else:
-            model.objects.create(user=user, recipe=recipe)
-            serializer = ShortRecipeSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+    @action(detail=True, methods=["POST"],
+            permission_classes=[IsAuthenticated])
+    def favorite(self, request, pk):
+        return self.post_method_for_actions(
+            request=request, pk=pk, serializers=FavoriteSerializer)
+
+    @favorite.mapping.delete
+    def delete_favorite(self, request, pk):
+        return self.delete_method_for_actions(
+            request=request, pk=pk, model=Favourite)
+
+    @action(detail=True, methods=["POST"],
+            permission_classes=[IsAuthenticated])
+    def shopping_cart(self, request, pk):
+        return self.post_method_for_actions(
+            request=request, pk=pk, serializers=ShoppingCartSerializer)
+
+    @shopping_cart.mapping.delete
+    def delete_shopping_cart(self, request, pk):
+        return self.delete_method_for_actions(
+            request=request, pk=pk, model=ShoppingCart)
+    
 
 
 class UserViewSet(UserViewSet):
@@ -114,7 +125,7 @@ class UserViewSet(UserViewSet):
             subscriber=subscriber, author=author)
         if not subscription.exists():
             return Response(
-                {'errors': 'Такой подписки нет.'},
+                {'errors': 'Такой подписки нет!'},
                 status=status.HTTP_400_BAD_REQUEST)
         subscription.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

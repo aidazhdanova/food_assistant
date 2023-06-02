@@ -11,7 +11,7 @@ load_dotenv()
 SECRET_KEY = 'django-insecure-m-e8-*nku+h8)k+q^-&ay-fg95&l82ut)mp6t^c59@_i-0^!+h'
 
 
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'djoser',
     'django_filters',
     'rest_framework.authtoken',
+    'django_extensions',
 
 ]
 
