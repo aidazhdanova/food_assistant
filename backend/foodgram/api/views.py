@@ -42,21 +42,21 @@ class RecipeViewSet(viewsets.ModelViewSet):
     filterset_class = RecipeFilter
     pagination_class = PageLimitPagination
 
+    def get_serializer_class(self):
+        if self.request.method in SAFE_METHODS:
+            return RecipeSerializer
+        return RecipeCreateSerializer
+
     @staticmethod
-    def post_method_for_actions(request, pk, serializers):
+    def add(request, pk, serializers):
         data = {'user': request.user.id, 'recipe': pk}
         serializer = serializers(data=data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    def get_serializer_class(self):
-        if self.request.method in SAFE_METHODS:
-            return RecipeSerializer
-        return RecipeCreateSerializer
-   
     @staticmethod
-    def delete_method_for_actions(request, pk, model):
+    def delete(request, pk, model):
         user = request.user
         recipe = get_object_or_404(Recipe, id=pk)
         model_obj = get_object_or_404(model, user=user, recipe=recipe)
@@ -85,7 +85,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def delete_shopping_cart(self, request, pk):
         return self.delete_method_for_actions(
             request=request, pk=pk, model=ShoppingCart)
-   
+
     @action(detail=False, methods=['GET'],
             permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
@@ -114,7 +114,8 @@ class CustomUserViewSet(UserViewSet):
     pagination_class = PageLimitPagination
 
     @action(
-        methods=['POST', 'DELETE'], detail=True, permission_classes=[IsAuthenticated])
+        methods=['POST', 'DELETE'], detail=True,
+        permission_classes=[IsAuthenticated])
     def subscribe(self, request, id=None):
         if request.method == 'POST':
             user = request.user
@@ -156,5 +157,4 @@ class CustomUserViewSet(UserViewSet):
                 context={'request': request}
             )
             return self.get_paginated_response(serializer.data)
-    
         raise NotFound()
