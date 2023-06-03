@@ -66,24 +66,24 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["POST"],
             permission_classes=[IsAuthenticated])
     def favorite(self, request, pk):
-        return self.post_method_for_actions(
+        return self.add(
             request=request, pk=pk, serializers=FavoriteSerializer)
 
     @favorite.mapping.delete
     def delete_favorite(self, request, pk):
-        return self.delete_method_for_actions(
+        return self.delete(
             request=request, pk=pk, model=Favourite)
 
     @action(detail=True, methods=["POST"],
             permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk):
         self.queryset = self.queryset.prefetch_related('shopping')
-        return self.post_method_for_actions(
+        return self.add(
             request=request, pk=pk, serializers=ShoppingCartSerializer)
 
     @shopping_cart.mapping.delete
     def delete_shopping_cart(self, request, pk):
-        return self.delete_method_for_actions(
+        return self.delete(
             request=request, pk=pk, model=ShoppingCart)
 
     @action(detail=False, methods=['GET'],
