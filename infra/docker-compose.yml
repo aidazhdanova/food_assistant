@@ -12,7 +12,7 @@ services:
 
     
   backend:
-    image: aidazhdanova/foodgram:v1.3.11
+    image: aidazhdanova/foodgram:v1.3.38
     restart: always
     volumes:
       - static_value:/app/static/
