@@ -46,7 +46,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.request.method in SAFE_METHODS:
             return RecipeSerializer
         return RecipeCreateSerializer
-    
+
     @staticmethod
     def post_method(request, pk, serializers):
         data = {'user': request.user.id, 'recipe': pk}
@@ -54,7 +54,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-   
+
     @staticmethod
     def delete_method(request, pk, model):
         user = request.user

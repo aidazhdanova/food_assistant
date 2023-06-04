@@ -1,14 +1,12 @@
 import os
+
 from dotenv import load_dotenv
-
-
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 load_dotenv()
 
-
-SECRET_KEY = 'django-insecure-m-e8-*nku+h8)k+q^-&ay-fg95&l82ut)mp6t^c59@_i-0^!+h'
+SECRET_KEY = os.getenv('SECRET_KEY')
 
 
 DEBUG = True
@@ -21,8 +19,6 @@ ALLOWED_HOSTS = [
 ]
 
 
-# Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -30,7 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+
     'users',
     'recipes',
     'api',
@@ -74,8 +70,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'foodgram.wsgi.application'
 
 
-
-
 DATABASES = {
     'default': {
         'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
@@ -95,10 +89,6 @@ DATABASES = {
 # }
 
 
-
-
-
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -113,9 +103,6 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-
-
-
 
 LANGUAGE_CODE = 'ru'
 

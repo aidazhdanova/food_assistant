@@ -1,6 +1,5 @@
 from django.db import transaction
 from django.forms import ValidationError
-from django.shortcuts import get_object_or_404
 from drf_extra_fields.fields import Base64ImageField
 from recipes.models import (Favourite, Ingredient, Recipe, RecipeIngredient,
                             ShoppingCart, Tag)
@@ -109,14 +108,14 @@ class IngredientInRecipeSerializer(serializers.ModelSerializer):
     measurement_unit = serializers.ReadOnlyField(
         source='ingredient.measurement_unit'
     )
-    amount = serializers.IntegerField()
 
     class Meta:
         model = RecipeIngredient
         fields = ('id',
                   'name',
                   'measurement_unit',
-                  'amount')
+                  'amount'
+                  )
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -128,7 +127,9 @@ class TagSerializer(serializers.ModelSerializer):
 class RecipeSerializer(serializers.ModelSerializer):
     tags = TagSerializer(many=True, read_only=True)
     author = UserSerializer(read_only=True)
-    ingredients = serializers.SerializerMethodField()
+    ingredients = IngredientInRecipeSerializer(
+        source='recipe_ingredients', many=True, read_only=True
+    )
     is_favorited = serializers.SerializerMethodField(read_only=True)
     is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
 
@@ -146,13 +147,6 @@ class RecipeSerializer(serializers.ModelSerializer):
             'text',
             'cooking_time',
         )
-
-    def get_ingredients(self, obj):
-        recipe_ingredients = obj.recipe_ingredients.all()
-        serializer = IngredientInRecipeSerializer(
-            recipe_ingredients, many=True
-        )
-        return serializer.data
 
     def get_is_favorited(self, obj):
         user = self.context['request'].user
@@ -194,11 +188,21 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             raise ValidationError({
                 'errors': 'Выбери хотя бы один ингредиент!'})
 
+        ingredient_ids = [item['id'] for item in value]
+        ingredients = Ingredient.objects.filter(id__in=ingredient_ids)
+        ingredient_dict = {
+            ingredient.id: ingredient for ingredient in ingredients
+        }
+
         ingredients_list = []
         for item in value:
             ingredient_id = item['id']
             amount = item['amount']
-            ingredient = get_object_or_404(Ingredient, id=ingredient_id)
+            ingredient = ingredient_dict.get(ingredient_id)
+
+            if not ingredient:
+                raise ValidationError({
+                    'errors': 'Неверный идентификатор ингредиента!'})
 
             if ingredient in ingredients_list:
                 raise ValidationError({
@@ -230,7 +234,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     def create_ingredients_amounts(self, ingredients, recipe):
         recipe_ingredients = [
             RecipeIngredient(
-                ingredient=Ingredient.objects.get(id=ingredient['id']),
+                ingredient_id=ingredient['id'],
                 recipe=recipe,
                 amount=ingredient['amount']
             )
@@ -258,7 +262,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         instance.ingredients.clear()
         self.create_ingredients_amounts(
             recipe=instance, ingredients=ingredients)
-        instance.save()
 
         return instance
 

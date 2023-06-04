@@ -45,4 +45,5 @@ POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 DB_HOST=db
 DB_PORT=5432
+SECRET_KEY=<секретный ключ проекта django>
 ```
