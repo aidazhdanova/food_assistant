@@ -1,9 +1,11 @@
 from django.db import transaction
 from django.forms import ValidationError
 from drf_extra_fields.fields import Base64ImageField
-from recipes.models import (Favourite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Tag)
 from rest_framework import serializers
+
+from recipes.models import (Favourite, Ingredient,
+                            Recipe, RecipeIngredient,
+                            ShoppingCart, Tag)
 from users.models import Subscribe, User
 
 
@@ -189,9 +191,8 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
                 'errors': 'Выбери хотя бы один ингредиент!'})
 
         ingredient_ids = [item['id'] for item in value]
-        ingredients = Ingredient.objects.filter(id__in=ingredient_ids)
         ingredient_dict = {
-            ingredient.id: ingredient for ingredient in ingredients
+            ingredient.id: ingredient for ingredient in Ingredient.objects.filter(id__in=ingredient_ids)
         }
 
         ingredients_list = []
@@ -253,7 +254,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
         return recipe
 
-    def update(self, instance, validated_data):
+    def update(self, instance, validated_data): 
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
 
@@ -264,6 +265,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             recipe=instance, ingredients=ingredients)
 
         return instance
+    
 
     def to_representation(self, instance):
         request = self.context.get('request')
