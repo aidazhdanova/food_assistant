@@ -3,14 +3,11 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from djoser.views import UserViewSet
-from recipes.models import (Favourite, Ingredient, Recipe, RecipeIngredient,
-                            ShoppingCart, Tag)
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
-from users.models import Subscribe, User
 
 from .filters import IngredientSearchFilter, RecipeFilter
 from .pagination import PageLimitPagination
@@ -19,6 +16,9 @@ from .serializers import (FavoriteSerializer, IngredientSerializer,
                           RecipeCreateSerializer, RecipeSerializer,
                           ShoppingCartSerializer, SubscriptionSerializer,
                           TagSerializer)
+from recipes.models import (Favourite, Ingredient, Recipe, RecipeIngredient,
+                            ShoppingCart, Tag)
+from users.models import Subscribe, User
 
 
 class TagsViewSet(viewsets.ReadOnlyModelViewSet):
@@ -112,6 +112,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
 class CustomUserViewSet(UserViewSet):
     pagination_class = PageLimitPagination
+    ''' Я понимаю, что нужно было просто убрать ветку с elif, но решила переписать код
+    Сейчас вроде как все должно быть корректно. '''
 
     @staticmethod
     def post_method(request, id, serializers):

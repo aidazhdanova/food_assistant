@@ -1,11 +1,10 @@
 from django.db import transaction
-from django.forms import ValidationError
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
+from rest_framework.exceptions import ValidationError
 
-from recipes.models import (Favourite, Ingredient,
-                            Recipe, RecipeIngredient,
-                            ShoppingCart, Tag)
+from recipes.models import (Favourite, Ingredient, Recipe,
+                            RecipeIngredient, ShoppingCart, Tag)
 from users.models import Subscribe, User
 
 
@@ -187,8 +186,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
     def validate_ingredients(self, value):
         if not value:
-            raise ValidationError({
-                'errors': 'Выбери хотя бы один ингредиент!'})
+            raise ValidationError('Выбери хотя бы один ингредиент!')
 
         ingredient_ids = [item['id'] for item in value]
         ingredient_dict = {
@@ -202,16 +200,13 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             ingredient = ingredient_dict.get(ingredient_id)
 
             if not ingredient:
-                raise ValidationError({
-                    'errors': 'Неверный идентификатор ингредиента!'})
+                raise ValidationError('Неверный идентификатор ингредиента!')
 
             if ingredient in ingredients_list:
-                raise ValidationError({
-                    'errors': 'Ингредиенты не могут повторяться!'})
+                raise ValidationError('Ингредиенты не могут повторяться!')
 
             if amount <= 0:
-                raise ValidationError({
-                    'errors': 'Количество ингредиента должно быть больше 0!'})
+                raise ValidationError('Количество ингредиента должно быть больше 0!')
 
             ingredients_list.append(ingredient)
 
@@ -232,16 +227,26 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return value
 
     @transaction.atomic
-    def create_ingredients_amounts(self, ingredients, recipe):
-        recipe_ingredients = [
-            RecipeIngredient(
-                ingredient_id=ingredient['id'],
-                recipe=recipe,
-                amount=ingredient['amount']
-            )
-            for ingredient in ingredients
-        ]
-        RecipeIngredient.objects.bulk_create(recipe_ingredients)
+    def save_recipe_ingredients(self, recipe, ingredients):
+        '''Здесь я исправляла баг, возникающий при обновлении рецепта,
+        связанный с ингредиентами.'''
+        existing_ingredients = recipe.recipe_ingredients.all()
+        existing_ingredient_ids = [ingredient.id for ingredient in existing_ingredients]
+
+        for ingredient_data in ingredients:
+            ingredient_id = ingredient_data['id']
+            amount = ingredient_data['amount']
+
+            if ingredient_id in existing_ingredient_ids:
+                recipe_ingredient = existing_ingredients.get(id=ingredient_id)
+                recipe_ingredient.amount = amount
+                recipe_ingredient.save()
+            else:
+                RecipeIngredient.objects.create(
+                    ingredient_id=ingredient_id,
+                    recipe=recipe,
+                    amount=amount
+                )
 
     @transaction.atomic
     def create(self, validated_data):
@@ -250,22 +255,19 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
         recipe = super().create(validated_data)
         recipe.tags.set(tags)
-        self.create_ingredients_amounts(recipe=recipe, ingredients=ingredients)
+        self.save_recipe_ingredients(recipe, ingredients)
 
         return recipe
 
-    def update(self, instance, validated_data): 
+    def update(self, instance, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
 
         instance = super().update(instance, validated_data)
         instance.tags.set(tags)
-        instance.ingredients.clear()
-        self.create_ingredients_amounts(
-            recipe=instance, ingredients=ingredients)
+        self.save_recipe_ingredients(instance, ingredients)
 
         return instance
-    
 
     def to_representation(self, instance):
         request = self.context.get('request')
@@ -274,7 +276,6 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Favourite
         fields = ('user', 'recipe')
