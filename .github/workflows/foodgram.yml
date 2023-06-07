@@ -44,7 +44,7 @@ jobs:
           tags: ${{ secrets.DOCKER_USERNAME }}/foodgram:latest
           file: ./backend/foodgram/Dockerfile
         
-      - name: Push frontend image to Docker Hub
+      - name: Push frontend to Docker Hub
         uses: docker/build-push-action@v2
         with:
           push: true
@@ -80,7 +80,6 @@ jobs:
             sudo docker-compose exec -T backend python manage.py collectstatic --no-input
             sudo docker-compose exec -T backend python manage.py makemigrations 
             sudo docker-compose exec -T backend python manage.py migrate
-            sudo docker-compose exec -T backend python manage.py loaddata fixtures.json
 
   send_message:
     runs-on: ubuntu-latest
