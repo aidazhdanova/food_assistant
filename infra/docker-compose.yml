@@ -1,4 +1,4 @@
-version: '3.3'
+version: '3.8'
 services:
   db:
     image: postgres:13.0-alpine
@@ -12,7 +12,7 @@ services:
 
     
   backend:
-    image: aidazhdanova/foodgram:v1.5.90
+    image: aidazhdanova/foodgram:latest
     restart: always
     volumes:
       - static_value:/app/static/
@@ -24,9 +24,7 @@ services:
 
 
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    image: aidazhdanova/foodgram_frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
   
