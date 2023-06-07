@@ -24,7 +24,7 @@ services:
 
 
   frontend:
-    image: aidazhdanova/foodgram_frontend:latest
+    image: aidazhdanova/foodgram_frontend:v2
     volumes:
       - ../frontend/:/app/result_build/
   
