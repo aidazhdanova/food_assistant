@@ -1,49 +1,20 @@
-* Разворачиваем образы и запускаем контейнеры:
+[![Django-app workflow](https://github.com/aidazhdanova/foodgram-project-react/actions/workflows/foodgram.yml/badge.svg)](https://github.com/aidazhdanova/foodgram-project-react/actions/workflows/foodgram.yml)
 
-```
-docker-compose up -d --build
-```
 
-* Выполняем миграции:
+### Описание:
+Сервис позволяет пользователю публиковать рецепты, подписываться на публикации других пользователей, добавлять понравившиеся рецепты в список избранное, 
+а также скачивать сводный список продуктов, необходимых для приготовления одного или нескольких выбранных блюд.
 
-```
-docker-compose exec backend python manage.py migrate
-```
 
-* Создаем суперпользователя:
+Данные админа:  
+* email: admin@bk.ru
+* password: admin
 
-```
-docker-compose exec backend python manage.py createsuperuser
-```
+Админка:
+http://84.201.134.222/admin/
 
-* Подключаем статику:
+Api Root:
+http://84.201.134.222/api/
 
-```
-docker-compose exec backend python manage.py collectstatic --no-input
-```
-
-* Заполняем базу исходными данными:
-
-```
-docker-compose exec backend python manage.py loaddata fixtures.json
-```
-
-* Создаем резервную копию базы:
-
-```
-docker-compose exec backend python manage.py dumpdata > fixtures.json
-```
-* Команда для остановки контейнеров:
-```
-docker-compose down -v
-```
-Шаблон наполнения ENV-файла
-```
-DB_ENGINE=django.db.backends.postgresql
-DB_NAME=postgres
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-DB_HOST=db
-DB_PORT=5432
-SECRET_KEY=<секретный ключ проекта django>
-```
+Документация:
+http://84.201.134.222/api/docs/
