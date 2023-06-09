@@ -48,23 +48,19 @@ docker-compose exec backend python manage.py collectstatic --no-input
 
 ```
 docker-compose exec backend python manage.py loaddata ingredients.json
-
 ```
 
 * Создаем резервную копию базы:
 
 ```
 docker-compose exec backend python manage.py dumpdata > fixtures.json
-
 ```
 * Команда для остановки контейнеров:
 ```
-
 docker-compose down -v
-
 ```
 
-Создаем в корневой папке файл .env с переменными окружения, необходимыми 
+* Создаем в корневой папке файл .env с переменными окружения, необходимыми 
 для работы приложения.
 
 Шаблон наполнения .env файла:
