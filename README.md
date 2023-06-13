@@ -21,7 +21,7 @@
 
 * Клонируем репозиторий, заходим в директорию с `docker-compose.yaml`
 ```
-git clone https://github.com/aidazhdanova/foodgram-project-react.git
+git clone https://github.com/aidazhdanova/food_assistant
 cd foodgram-project-react/infra/
 ```
 * Разворачиваем образы и запускаем контейнеры:
