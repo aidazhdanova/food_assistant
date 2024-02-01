@@ -76,4 +76,4 @@ SECRET_KEY = <Django ключ проекта>
 https://github.com/yandex-praktikum/foodgram-project-react
 
 ### Backend:
-https://github.com/aidazhdanova
+https://github.com/aidazhdanova 
